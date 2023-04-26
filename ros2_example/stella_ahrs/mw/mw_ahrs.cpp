@@ -46,14 +46,14 @@ namespace ntrex
       }
     }
   }
-  MwAhrsRosDriver::MwAhrsRosDriver(char *port, int baud_rat, int sel) : Node("MW_AHRS_ROS2")
+  MwAhrsRosDriver::MwAhrsRosDriver(char *port, int baud_rat, int sel):Node("MW_AHRS_ROS2")
   {
     int res = MW_AHRS_Serial_Connect(port, baud_rat, sel);
     
-    this->declare_parameter("linear_acceleration_stddev");
-    this->declare_parameter("angular_velocity_stddev");
-    this->declare_parameter("magnetic_field_stddev");
-    this->declare_parameter("orientation_stddev");
+    this->declare_parameter("linear_acceleration_stddev", linear_acceleration_stddev_);
+    this->declare_parameter("angular_velocity_stddev", angular_velocity_stddev_);
+    this->declare_parameter("magnetic_field_stddev", magnetic_field_stddev_);
+    this->declare_parameter("orientation_stddev", orientation_stddev_);
     
     this->get_parameter("linear_acceleration_stddev", linear_acceleration_stddev_);
     this->get_parameter("angular_velocity_stddev", angular_velocity_stddev_);
@@ -69,7 +69,8 @@ namespace ntrex
       imu_data_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("imu/data", rclcpp::QoS(1));
       imu_mag_pub_ = this->create_publisher<sensor_msgs::msg::MagneticField>("imu/mag", rclcpp::QoS(1));
       imu_yaw_pub_ = this->create_publisher<std_msgs::msg::Float64>("imu/yaw", rclcpp::QoS(1));
-      
+      broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+
       AHRS_publish_topic_timer = this->create_wall_timer(1ms, std::bind(&MwAhrsRosDriver::publish_topic, this));
     }
     else
@@ -187,15 +188,16 @@ namespace ntrex
     if (publish_tf_)
     {
       geometry_msgs::msg::TransformStamped tf;
-      tf.header.stamp = now;
+      tf.header.stamp = this->get_clock()->now();
       tf.header.frame_id = parent_frame_id_;
       tf.child_frame_id = frame_id_;
       tf.transform.translation.x = 0.0;
-      tf.transform.translation.y = 0.0;
+      tf.transform.translation.y = 0.01;
       tf.transform.translation.z = 0.0;
       tf.transform.rotation = imu_data_msg.orientation;
 
       broadcaster_->sendTransform(tf);
+      //tf_broadcaster_->sendTransform(tf);
     }
   }
 

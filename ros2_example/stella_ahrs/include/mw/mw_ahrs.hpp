@@ -44,14 +44,13 @@ namespace ntrex
 {
     class MwAhrsRosDriver : public rclcpp::Node
     {
-    public:
     private:
         pid_t pid;
         pthread_t tid;
 
-        bool publish_tf_;
-        std::string parent_frame_id_;
-        std::string frame_id_;
+        bool publish_tf_ = true;
+        std::string parent_frame_id_ = "base_link";
+        std::string frame_id_ = "imu";
 
         double linear_acceleration_stddev_;
         double angular_velocity_stddev_;
@@ -70,7 +69,7 @@ namespace ntrex
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_data_raw_pub_, imu_data_pub_;
         rclcpp::Publisher<sensor_msgs::msg::MagneticField>::SharedPtr imu_mag_pub_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr imu_yaw_pub_;
-        std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
+        std::shared_ptr<tf2_ros::TransformBroadcaster> broadcaster_;
 
         // ROS timer
         rclcpp::TimerBase::SharedPtr AHRS_publish_topic_timer;
